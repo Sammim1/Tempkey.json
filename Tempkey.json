@@ -13,4 +13,11 @@
     "expiresAt": "2025-11-30",
     "allowOffline": false
   }
+  {
+    "id": "594a716fc541bbd3",
+    "username": "Sammim",
+    "password": "Sammim",
+    "expiresAt": "2025-12-25",
+    "allowOffline": true
+  }
 ]
