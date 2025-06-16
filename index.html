@@ -1,17 +1,33 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>JSON Admin Panel</title>
-  <link rel="stylesheet" href="style.css" />
+  <meta charset="UTF-8">
+  <title>Admin Panel - JSON Editor</title>
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <h1>Admin Panel</h1>
-  <div id="table-container"></div>
-  <button onclick="addRow()">➕ Add Row</button>
-  <button onclick="copyJSON()">📋 Copy JSON</button>
-  <textarea id="outputJSON" rows="10" readonly></textarea>
+
+  <h2>🔧 JSON Editor Panel</h2>
+
+  <table id="dataTable">
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>Username</th>
+        <th>Password</th>
+        <th>Expires At</th>
+        <th>Allow Offline</th>
+        <th>Action</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+
+  <button class="btn" onclick="addRow()">➕ Add Row</button>
+  <br><br>
+  <textarea id="outputJSON" readonly></textarea>
+  <button class="btn btn-copy" onclick="copyJSON()">📋 Copy JSON</button>
+
   <script src="script.js"></script>
 </body>
 </html>
