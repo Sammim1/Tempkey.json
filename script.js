@@ -1,76 +1,86 @@
-let data = [];
+const jsonData = [
+  {
+    "id": "6d95fal7c7e40bea",
+    "username": "dpmods",
+    "password": "dpmods",
+    "expiresAt": "2025-12-31",
+    "allowOffline": true
+  },
+  {
+    "id": "android_device_id_2",
+    "username": "user2",
+    "password": "pass2",
+    "expiresAt": "2025-11-30",
+    "allowOffline": false
+  }
+];
 
-function fetchData() {
-  fetch('data.json')
-    .then(res => res.json())
-    .then(json => {
-      data = json;
-      renderTable();
-    });
-}
+function loadTable(data) {
+  const tbody = document.querySelector('#dataTable tbody');
+  tbody.innerHTML = '';
 
-function renderTable() {
-  const container = document.getElementById("table-container");
-  const table = document.createElement("table");
-  table.innerHTML = `
-    <thead>
-      <tr>
-        <th>ID</th>
-        <th>Username</th>
-        <th>Password</th>
-        <th>Expires At</th>
-        <th>Allow Offline</th>
-        <th>Action</th>
-      </tr>
-    </thead>
-    <tbody>
-      ${data.map((item, index) => `
-        <tr>
-          <td><input type="text" value="${item.id}" onchange="updateValue(${index}, 'id', this.value)" /></td>
-          <td><input type="text" value="${item.username}" onchange="updateValue(${index}, 'username', this.value)" /></td>
-          <td><input type="text" value="${item.password}" onchange="updateValue(${index}, 'password', this.value)" /></td>
-          <td><input type="date" value="${item.expiresAt}" onchange="updateValue(${index}, 'expiresAt', this.value)" /></td>
-          <td>
-            <input type="checkbox" ${item.allowOffline ? "checked" : ""} onchange="updateValue(${index}, 'allowOffline', this.checked)" />
-          </td>
-          <td><button onclick="deleteRow(${index})">🗑️ Delete</button></td>
-        </tr>
-      `).join("")}
-    </tbody>
-  `;
-  container.innerHTML = "";
-  container.appendChild(table);
-  updateOutput();
-}
+  data.forEach((item, index) => {
+    const row = document.createElement('tr');
+    row.innerHTML = `
+      <td><input type="text" value="${item.id}" /></td>
+      <td><input type="text" value="${item.username}" /></td>
+      <td><input type="text" value="${item.password}" /></td>
+      <td><input type="date" value="${item.expiresAt}" /></td>
+      <td><input type="checkbox" ${item.allowOffline ? 'checked' : ''} /></td>
+      <td><button class="btn-delete" onclick="deleteRow(this)">🗑️</button></td>
+    `;
+    tbody.appendChild(row);
+  });
 
-function updateValue(index, field, value) {
-  data[index][field] = field === 'allowOffline' ? Boolean(value) : value;
-  updateOutput();
-}
-
-function deleteRow(index) {
-  data.splice(index, 1);
-  renderTable();
+  updateJSON();
 }
 
 function addRow() {
-  data.push({
-    id: "",
-    username: "",
-    password: "",
-    expiresAt: "",
-    allowOffline: false
-  });
-  renderTable();
+  const tbody = document.querySelector('#dataTable tbody');
+  const row = document.createElement('tr');
+  row.innerHTML = `
+    <td><input type="text" value="" /></td>
+    <td><input type="text" value="" /></td>
+    <td><input type="text" value="" /></td>
+    <td><input type="date" value="" /></td>
+    <td><input type="checkbox" /></td>
+    <td><button class="btn-delete" onclick="deleteRow(this)">🗑️</button></td>
+  `;
+  tbody.appendChild(row);
+  updateJSON();
 }
 
-function updateOutput() {
-  document.getElementById("outputJSON").value = JSON.stringify(data, null, 2);
+function deleteRow(button) {
+  const row = button.closest('tr');
+  row.remove();
+  updateJSON();
 }
+
+function updateJSON() {
+  const rows = document.querySelectorAll('#dataTable tbody tr');
+  const data = [];
+
+  rows.forEach(row => {
+    const cells = row.querySelectorAll('input');
+    data.push({
+      id: cells[0].value,
+      username: cells[1].value,
+      password: cells[2].value,
+      expiresAt: cells[3].value,
+      allowOffline: cells[4].checked
+    });
+  });
+
+  document.getElementById('outputJSON').value = JSON.stringify(data, null, 2);
+}
+
+document.querySelector('#dataTable').addEventListener('input', updateJSON);
 
 function copyJSON() {
-  navigator.clipboard.writeText(document.getElementById("outputJSON").value);
-  alert("JSON copied to clipboard!");
+  const textarea = document.getElementById("outputJSON");
+  textarea.select();
+  document.execCommand("copy");
+  alert("✅ JSON copied to clipboard!");
 }
 
-window.onload = fetchData;
+loadTable(jsonData);
