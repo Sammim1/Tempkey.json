@@ -19,12 +19,5 @@
     "password": "RASHIN",
     "expiresAt": "2025-12-31",
     "allowOffline": true
-  },
-  {
-    "id": "56754",
-    "username": "88888888",
-    "password": "89767",
-    "expiresAt": "2025-06-27",
-    "allowOffline": true
   }
 ]
