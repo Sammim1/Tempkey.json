@@ -1,28 +1,34 @@
 let users = [];
 let editIndex = null;
 
-function loadData() {
+// Load data from localStorage or GitHub RAW JSON file
+async function loadData() {
   const storedData = localStorage.getItem("usersData");
+
   if (storedData) {
     users = JSON.parse(storedData);
+    renderTable();
   } else {
-    users = [
-      {
-        id: "6d95fal7c7e40bea",
-        username: "dpmods",
-        password: "dpmods",
-        expiresAt: "2025-12-31",
-        allowOffline: true
-      }
-    ];
-    saveData();
+    try {
+      const response = await fetch("https://raw.githubusercontent.com/Sammim1/Tempkey.json/main/Tempkey.json");
+      if (!response.ok) throw new Error("Network response was not ok");
+      users = await response.json();
+      saveData();
+      renderTable();
+    } catch (error) {
+      console.error("Failed to load JSON from GitHub:", error);
+      alert("❌ GitHub থেকে ডেটা লোড করা যায়নি।");
+      users = [];
+    }
   }
 }
 
+// Save users array to localStorage
 function saveData() {
   localStorage.setItem("usersData", JSON.stringify(users));
 }
 
+// Render the user table and JSON textarea
 function renderTable() {
   const tbody = document.querySelector("#userTable tbody");
   tbody.innerHTML = "";
@@ -45,10 +51,12 @@ function renderTable() {
   document.getElementById("jsonOutput").value = JSON.stringify(users, null, 2);
 }
 
+// Toggle Add User form visibility
 function toggleAddForm() {
   document.getElementById("addForm").classList.toggle("hidden");
 }
 
+// Clear Add User form inputs
 function clearAddForm() {
   document.getElementById("newId").value = "";
   document.getElementById("newUsername").value = "";
@@ -57,6 +65,7 @@ function clearAddForm() {
   document.getElementById("newAllowOffline").value = "true";
 }
 
+// Add new user to users array
 function addUser() {
   const id = document.getElementById("newId").value.trim();
   const username = document.getElementById("newUsername").value.trim();
@@ -81,6 +90,7 @@ function addUser() {
   clearAddForm();
 }
 
+// Load user data into Edit form
 function editUser(index) {
   editIndex = index;
   const user = users[index];
@@ -92,6 +102,7 @@ function editUser(index) {
   document.getElementById("editForm").classList.remove("hidden");
 }
 
+// Save edited user data
 function saveEdit() {
   if (editIndex === null) return;
 
@@ -126,6 +137,7 @@ function saveEdit() {
   editIndex = null;
 }
 
+// Delete user
 function deleteUser(index) {
   if (confirm("Are you sure to delete this user?")) {
     users.splice(index, 1);
@@ -134,6 +146,7 @@ function deleteUser(index) {
   }
 }
 
+// Copy JSON text to clipboard
 function copyJSON() {
   const json = document.getElementById("jsonOutput");
   json.select();
@@ -141,6 +154,7 @@ function copyJSON() {
   alert("Copied JSON to clipboard!");
 }
 
+// Save users from JSON textarea (merge)
 function saveFromTextarea() {
   try {
     const newUsers = JSON.parse(document.getElementById("jsonOutput").value);
@@ -170,6 +184,7 @@ function saveFromTextarea() {
   }
 }
 
+// Send JSON data to Telegram bot
 function sendToTelegram() {
   const botToken = "7726781915:AAG4AGAOP2-FNvQ3H7j0AIAruf6TsgmmX9c";
   const chatId = "7598462592";
@@ -204,7 +219,21 @@ function sendToTelegram() {
     });
 }
 
+// Refresh data directly from GitHub (discard local edits)
+async function refreshFromGitHub() {
+  if (!confirm("This will overwrite local changes with data from GitHub. Continue?")) return;
+  try {
+    const response = await fetch("https://raw.githubusercontent.com/Sammim1/Tempkey.json/main/Tempkey.json");
+    if (!response.ok) throw new Error("Network response was not ok");
+    users = await response.json();
+    saveData();
+    renderTable();
+    alert("✅ GitHub থেকে নতুন ডেটা লোড হয়েছে!");
+  } catch (error) {
+    alert("❌ GitHub থেকে ডেটা লোড করা যায়নি: " + error.message);
+  }
+}
+
 window.onload = () => {
   loadData();
-  renderTable();
 };
