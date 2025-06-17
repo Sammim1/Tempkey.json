@@ -12,5 +12,12 @@
     "password": "RASHIN",
     "expiresAt": "2025-12-31",
     "allowOffline": true
+  },
+  {
+    "id": "77777",
+    "username": "777777",
+    "password": "77777",
+    "expiresAt": "2025-06-20",
+    "allowOffline": true
   }
 ]
