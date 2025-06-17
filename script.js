@@ -1,25 +1,22 @@
 let users = [];
 let editIndex = null;
 
-// Load data from localStorage or GitHub RAW JSON file
-async function loadData() {
+// Load from localStorage or default user
+function loadData() {
   const storedData = localStorage.getItem("usersData");
-
   if (storedData) {
     users = JSON.parse(storedData);
-    renderTable();
   } else {
-    try {
-      const response = await fetch("https://raw.githubusercontent.com/Sammim1/Tempkey.json/main/Tempkey.json");
-      if (!response.ok) throw new Error("Network response was not ok");
-      users = await response.json();
-      saveData();
-      renderTable();
-    } catch (error) {
-      console.error("Failed to load JSON from GitHub:", error);
-      alert("❌ GitHub থেকে ডেটা লোড করা যায়নি।");
-      users = [];
-    }
+    users = [
+      {
+        id: "6d95fal7c7e40bea",
+        username: "dpmods",
+        password: "dpmods",
+        expiresAt: "2025-12-31",
+        allowOffline: true
+      }
+    ];
+    saveData();
   }
 }
 
@@ -28,7 +25,7 @@ function saveData() {
   localStorage.setItem("usersData", JSON.stringify(users));
 }
 
-// Render the user table and JSON textarea
+// Render users table and JSON textarea
 function renderTable() {
   const tbody = document.querySelector("#userTable tbody");
   tbody.innerHTML = "";
@@ -56,7 +53,7 @@ function toggleAddForm() {
   document.getElementById("addForm").classList.toggle("hidden");
 }
 
-// Clear Add User form inputs
+// Clear Add User form fields
 function clearAddForm() {
   document.getElementById("newId").value = "";
   document.getElementById("newUsername").value = "";
@@ -65,7 +62,7 @@ function clearAddForm() {
   document.getElementById("newAllowOffline").value = "true";
 }
 
-// Add new user to users array
+// Add new user after validation
 function addUser() {
   const id = document.getElementById("newId").value.trim();
   const username = document.getElementById("newUsername").value.trim();
@@ -90,7 +87,7 @@ function addUser() {
   clearAddForm();
 }
 
-// Load user data into Edit form
+// Fill Edit form with selected user data
 function editUser(index) {
   editIndex = index;
   const user = users[index];
@@ -102,7 +99,7 @@ function editUser(index) {
   document.getElementById("editForm").classList.remove("hidden");
 }
 
-// Save edited user data
+// Save edited user after validation
 function saveEdit() {
   if (editIndex === null) return;
 
@@ -137,7 +134,7 @@ function saveEdit() {
   editIndex = null;
 }
 
-// Delete user
+// Delete user with confirmation
 function deleteUser(index) {
   if (confirm("Are you sure to delete this user?")) {
     users.splice(index, 1);
@@ -146,7 +143,7 @@ function deleteUser(index) {
   }
 }
 
-// Copy JSON text to clipboard
+// Copy JSON from textarea to clipboard
 function copyJSON() {
   const json = document.getElementById("jsonOutput");
   json.select();
@@ -154,7 +151,7 @@ function copyJSON() {
   alert("Copied JSON to clipboard!");
 }
 
-// Save users from JSON textarea (merge)
+// Save JSON from textarea (merge with existing users)
 function saveFromTextarea() {
   try {
     const newUsers = JSON.parse(document.getElementById("jsonOutput").value);
@@ -219,21 +216,81 @@ function sendToTelegram() {
     });
 }
 
-// Refresh data directly from GitHub (discard local edits)
-async function refreshFromGitHub() {
-  if (!confirm("This will overwrite local changes with data from GitHub. Continue?")) return;
-  try {
-    const response = await fetch("https://raw.githubusercontent.com/Sammim1/Tempkey.json/main/Tempkey.json");
-    if (!response.ok) throw new Error("Network response was not ok");
-    users = await response.json();
-    saveData();
-    renderTable();
-    alert("✅ GitHub থেকে নতুন ডেটা লোড হয়েছে!");
-  } catch (error) {
-    alert("❌ GitHub থেকে ডেটা লোড করা যায়নি: " + error.message);
-  }
+// Load JSON from GitHub using API (with cache bypass)
+function refreshFromGitHub() {
+  const token = "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";
+  const repo = "Sammim1/Tempkey.json";
+  const path = "Tempkey.json";
+  const apiUrl = `https://api.github.com/repos/${repo}/contents/${path}`;
+
+  fetch(apiUrl, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+      Accept: "application/vnd.github.v3+json"
+    }
+  })
+    .then(res => res.json())
+    .then(data => {
+      const decodedContent = atob(data.content);
+      users = JSON.parse(decodedContent);
+      saveData();
+      renderTable();
+      alert("✅ JSON loaded from GitHub (latest)!");
+    })
+    .catch(error => {
+      alert("❌ Failed to load from GitHub: " + error.message);
+    });
+}
+
+// Upload JSON to GitHub using API
+function uploadToGitHub() {
+  const token = "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";
+  const repo = "Sammim1/Tempkey.json";
+  const path = "Tempkey.json";
+  const apiUrl = `https://api.github.com/repos/${repo}/contents/${path}`;
+
+  // First get the SHA of existing file
+  fetch(apiUrl, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+      Accept: "application/vnd.github.v3+json"
+    }
+  })
+    .then(res => res.json())
+    .then(data => {
+      const sha = data.sha;
+      const content = btoa(unescape(encodeURIComponent(JSON.stringify(users, null, 2))));
+
+      fetch(apiUrl, {
+        method: "PUT",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          Accept: "application/vnd.github.v3+json"
+        },
+        body: JSON.stringify({
+          message: `Update JSON via Web UI at ${new Date().toLocaleString()}`,
+          content: content,
+          sha: sha
+        })
+      })
+        .then(res => res.json())
+        .then(data => {
+          if (data.content) {
+            alert("✅ JSON uploaded to GitHub successfully!");
+          } else {
+            alert("❌ Failed to upload JSON to GitHub");
+          }
+        })
+        .catch(error => {
+          alert("❌ Upload error: " + error.message);
+        });
+    })
+    .catch(error => {
+      alert("❌ Could not get file SHA: " + error.message);
+    });
 }
 
 window.onload = () => {
   loadData();
+  renderTable();
 };
