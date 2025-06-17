@@ -4,7 +4,7 @@
     "username": "Sammim",
     "password": "Sammim",
     "expires_at": "2025-11-30",
-    "allow_offline": ""
+    "allow_offline": true
   },
   {
     "id": "android_device_id_2",
