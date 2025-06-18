@@ -1,10 +1,10 @@
 [
   {
     "id": "594a716fc541bbd3",
-    "username": "Sammim",
-    "password": "Sammim",
-    "expires_at": "2025-11-30",
-    "allow_offline": true
+    "username": "dpmods",
+    "password": "dpmods",
+    "expiresAt": "2025-12-31",
+    "allowOffline": true
   },
   {
     "id": "android_device_id_2",
@@ -12,12 +12,5 @@
     "password": "pass2",
     "expiresAt": "2025-11-30",
     "allowOffline": false
-  },
-  {
-    "id": "5e4085e16fdb78a2",
-    "username": "RASHIN",
-    "password": "RASHIN",
-    "expiresAt": "2025-12-31",
-    "allowOffline": true
   }
 ]
