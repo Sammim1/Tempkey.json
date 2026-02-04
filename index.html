@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>XG.Sammim | Prayer Pro</title>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+Bengali:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <div class="app">
+        <div class="header-design">
+            <div class="mosque-container">
+                <i class="fas fa-mosque mosque-main"></i>
+            </div>
+            <div class="neon-line"></div>
+            <h2 class="developer-name">XG.Sammim | Prayer Pro</h2>
+            <div class="neon-line-bottom"></div>
+        </div>
+
+        <select id="city" onchange="loadData()">
+            <option value="Dhaka">📍 ঢাকা</option>
+            <option value="Sylhet">📍 সিলেট</option>
+            <option value="Chittagong">📍 চট্টগ্রাম</option>
+            <option value="Rajshahi">📍 রাজশাহী</option>
+            <option value="Khulna">📍 খুলনা</option>
+        </select>
+
+        <div class="card clock-card glow">
+            <h2 id="clock">00:00:00</h2>
+            <p id="today">লোড হচ্ছে...</p>
+            <p id="hijriDate" class="gold-text"></p>
+        </div>
+
+        <div class="card ramadan-combined glow" onclick="showMonthlySchedule()" style="cursor: pointer;">
+            <div class="ramadan-box">
+                <p><i class="fas fa-sun"></i> সেহরি শেষ</p>
+                <span id="Sehri">--:--</span>
+            </div>
+            <div class="divider"></div>
+            <div class="ramadan-box">
+                <p><i class="fas fa-moon"></i> ইফতার</p>
+                <span id="Iftar">--:--</span>
+            </div>
+        </div>
+
+        <div class="card status-card glow" onclick="toggleStatusView()" style="cursor: pointer;">
+            <div class="status-wrapper">
+                <span id="prayerStatus" class="status-highlight">লোড হচ্ছে...</span>
+                <span id="nextTime" class="next-time-inline"></span>
+            </div>
+        </div>
+
+        <div class="card list-card glow">
+            <h3 class="list-title">নামাজের সময়সূচী</h3>
+            <div class="prayer-list">
+                <div class="time-row" onclick="toggleRakat('fajr-r')"><span>ফজর</span><span id="Fajr">--:--</span></div>
+                <div id="fajr-r" class="rakat-info">ফজর: ৪ রাকাত (২ সুন্নাত, ২ ফরজ)</div>
+                <div class="time-row" onclick="toggleRakat('dhuhr-r')"><span>যোহর</span><span id="Dhuhr">--:--</span></div>
+                <div id="dhuhr-r" class="rakat-info">যোহর: ১২ রাকাত (৪ সুন্নাত, ৪ ফরজ, ২ সুন্নাত, ২ নফল)</div>
+                <div class="time-row" onclick="toggleRakat('asr-r')"><span>আসর</span><span id="Asr">--:--</span></div>
+                <div id="asr-r" class="rakat-info">আসর: ৮ রাকাত (৪ সুন্নাত, ৪ ফরজ)</div>
+                <div class="time-row" onclick="toggleRakat('maghrib-r')"><span>মাগরিব</span><span id="Maghrib">--:--</span></div>
+                <div id="maghrib-r" class="rakat-info">মাগরিব: ৭ রাকাত (৩ ফরজ, ২ সুন্নাত, ২ নফল)</div>
+                <div class="time-row" onclick="toggleRakat('isha-r')"><span>এশা</span><span id="Isha">--:--</span></div>
+                <div id="isha-r" class="rakat-info">এশা: ১৭ রাকাত (৪ সুন্নাত, ৪ ফরজ, ২ সুন্নাত, ২ নফল, ৩ বিতর, ২ নফল)</div>
+            </div>
+        </div>
+    </div>
+
+    <div id="monthlyModal" class="modal">
+        <div class="modal-content">
+            <span class="close-btn" onclick="closeModal()">&times;</span>
+            <h3 style="color: var(--neon); text-align: center; font-size: 18px;">৩০ দিনের সেহরি ও ইফতার</h3>
+            <div id="monthlyList" class="monthly-list-container"></div>
+            <p style="font-size: 10px; text-align: center; color: #aaa; margin-top: 10px;">(১০ সেকেন্ড পর অটো বন্ধ হবে)</p>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
