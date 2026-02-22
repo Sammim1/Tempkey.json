@@ -6,14 +6,7 @@ let wakeLock = null;
 
 async function initApp() {
     await syncTime();
-    if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(
-            (pos) => fetchMonthly(pos.coords.latitude, pos.coords.longitude, true),
-            () => fetchMonthly()
-        );
-    } else {
-        fetchMonthly();
-    }
+    loadData();
     requestWakeLock();
 }
 
@@ -29,16 +22,13 @@ async function syncTime() {
 
 function getCorrectNow() { return new Date(Date.now() + timeOffset); }
 
-async function fetchMonthly(lat = null, lng = null, isGPS = false) {
+async function loadData() {
     const now = getCorrectNow();
     const city = document.getElementById("city").value;
     
-    // Method 1 corresponds to University of Islamic Sciences, Karachi (Used by IslamicFinder)
+    // Method 1 = University of Islamic Sciences, Karachi (IslamicFinder Standard)
     const method = 1; 
-    
-    const url = isGPS 
-        ? `https://api.aladhan.com/v1/calendar?latitude=${lat}&longitude=${lng}&method=${method}&school=1&month=${now.getMonth()+1}&year=${now.getFullYear()}`
-        : `https://api.aladhan.com/v1/calendarByCity?city=${city}&country=Bangladesh&method=${method}&school=1&month=${now.getMonth()+1}&year=${now.getFullYear()}`;
+    const url = `https://api.aladhan.com/v1/calendarByCity?city=${city}&country=Bangladesh&method=${method}&school=1&month=${now.getMonth()+1}&year=${now.getFullYear()}`;
 
     try {
         const res = await fetch(url);
@@ -58,77 +48,74 @@ function updateUI(monthlyData) {
     const todayData = monthlyData[today - 1];
     pTimes = todayData.timings;
 
+    // নামাজের সময়সূচী আপডেট
     const names = ["Fajr", "Dhuhr", "Asr", "Maghrib", "Isha"];
-    names.forEach(n => document.getElementById(n).innerText = t12(pTimes[n]));
+    names.forEach(n => {
+        let cleanTime = pTimes[n].split(' ')[0];
+        document.getElementById(n).innerText = format12Hour(cleanTime);
+    });
 
-    document.getElementById("Sehri").innerText = calculateSehri(pTimes.Fajr);
-    document.getElementById("Iftar").innerText = t12(pTimes.Maghrib);
+    // ইফতার ও সেহরি আপডেট
+    document.getElementById("Sehri").innerText = calculateSehri(pTimes.Fajr.split(' ')[0]);
+    document.getElementById("Iftar").innerText = format12Hour(pTimes.Maghrib.split(' ')[0]);
+    
+    // হিজরি তারিখ
     document.getElementById("hijriDate").innerText = `${todayData.date.hijri.day} ${todayData.date.hijri.month.en}, ${todayData.date.hijri.year} AH`;
+    
     updateStatus();
 }
 
-function showMonthlySchedule() {
-    const data = JSON.parse(localStorage.getItem('monthly_cache'));
-    if (!data) return;
-
-    const container = document.getElementById("monthlyList");
-    container.innerHTML = "";
-    const today = getCorrectNow().getDate();
-
-    data.forEach((day, i) => {
-        const row = document.createElement("div");
-        row.className = "list-item" + (i + 1 === today ? " today-highlight" : "");
-        
-        const sehri = calculateSehri(day.timings.Fajr);
-        const iftar = t12(day.timings.Maghrib);
-
-        row.innerHTML = `
-            <span class="day-num">${i + 1}</span>
-            <span style="flex: 1; margin-left: 5px;">${day.date.readable.split(' ')[0]} ${day.date.readable.split(' ')[1]}</span>
-            <span style="color:var(--gold); margin-right: 8px;">সেহরি: ${sehri}</span>
-            <span style="color:var(--neon)">ইফতার: ${iftar}</span>
-        `;
-        container.appendChild(row);
-        if (i + 1 === today) setTimeout(() => row.scrollIntoView({ behavior: 'smooth', block: 'center' }), 200);
-    });
-
-    document.getElementById("monthlyModal").style.display = "block";
-    clearTimeout(modalTimer);
-    modalTimer = setTimeout(closeModal, 10000);
+function format12Hour(timeStr) {
+    let [h, m] = timeStr.split(':').map(Number);
+    let ampm = h >= 12 ? 'PM' : 'AM';
+    h = h % 12 || 12;
+    return `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')} ${ampm}`;
 }
 
-function closeModal() { document.getElementById("monthlyModal").style.display = "none"; }
-
-function toggleStatusView() { statusView = (statusView + 1) % 3; updateStatus(); }
+function calculateSehri(fajrStr) {
+    let [h, m] = fajrStr.split(':').map(Number);
+    let d = new Date();
+    d.setHours(h, m);
+    d.setMinutes(d.getMinutes() - 5); // সেহরি ৫ মিনিট আগে শেষ
+    return format12Hour(`${d.getHours()}:${d.getMinutes()}`);
+}
 
 function updateStatus() {
     if (!pTimes.Fajr) return;
     const now = getCorrectNow();
-    
-    const sch = [{ n: "ফজর", t: pTimes.Fajr }, { n: "যোহর", t: pTimes.Dhuhr }, { n: "আসর", t: pTimes.Asr }, { n: "মাগরিব", t: pTimes.Maghrib }, { n: "এশা", t: pTimes.Isha }];
+    const sch = [
+        { n: "ফজর", t: pTimes.Fajr.split(' ')[0] },
+        { n: "যোহর", t: pTimes.Dhuhr.split(' ')[0] },
+        { n: "আসর", t: pTimes.Asr.split(' ')[0] },
+        { n: "মাগরিব", t: pTimes.Maghrib.split(' ')[0] },
+        { n: "এশা", t: pTimes.Isha.split(' ')[0] }
+    ];
+
     let nextP = null, nextPT = null;
     for (let p of sch) {
-        let [h, m] = p.t.split(' ')[0].split(':');
+        let [h, m] = p.t.split(':');
         let d = new Date(now); d.setHours(h, m, 0);
         if (d > now) { nextP = p; nextPT = d; break; }
     }
     if (!nextP) {
         nextP = sch[0]; nextPT = new Date(now); nextPT.setDate(now.getDate() + 1);
-        let [h, m] = nextP.t.split(' ')[0].split(':'); nextPT.setHours(h, m, 0);
+        let [h, m] = nextP.t.split(':'); nextPT.setHours(h, m, 0);
     }
 
-    let [sfH, sfM] = pTimes.Fajr.split(' ')[0].split(':');
-    let sTime = new Date(now); sTime.setHours(sfH, sfM, 0); sTime.setMinutes(sTime.getMinutes() - 5);
-    if (now > sTime) sTime.setDate(sTime.getDate() + 1);
+    let target = nextPT;
+    let label = `পরবর্তী নামাজ: ${nextP.n}`;
 
-    let [ifH, ifM] = pTimes.Maghrib.split(' ')[0].split(':');
-    let iTime = new Date(now); iTime.setHours(ifH, ifM, 0);
-    if (now > iTime) iTime.setDate(iTime.getDate() + 1);
-
-    let label = "", target = null;
-    if (statusView === 0) { label = `পরবর্তী নামাজ: ${nextP.n}`; target = nextPT; }
-    else if (statusView === 1) { label = "সেহরির বাকি:"; target = sTime; }
-    else { label = "ইফতারের বাকি:"; target = iTime; }
+    if (statusView === 1) { 
+        label = "সেহরির বাকি:"; 
+        let [sfH, sfM] = pTimes.Fajr.split(' ')[0].split(':');
+        target = new Date(now); target.setHours(sfH, sfM, 0); target.setMinutes(target.getMinutes() - 5);
+        if (now > target) target.setDate(target.getDate() + 1);
+    } else if (statusView === 2) { 
+        label = "ইফতারের বাকি:"; 
+        let [ifH, ifM] = pTimes.Maghrib.split(' ')[0].split(':');
+        target = new Date(now); target.setHours(ifH, ifM, 0);
+        if (now > target) target.setDate(target.getDate() + 1);
+    }
 
     const diff = Math.floor((target - now) / 60000);
     const h = Math.floor(diff / 60), m = diff % 60;
@@ -136,17 +123,28 @@ function updateStatus() {
     document.getElementById("nextTime").innerText = `(বাকি: ${h > 0 ? h + 'ঘঃ ' : ''}${m}মিঃ)`;
 }
 
-function t12(t) {
-    let [h, m] = t.split(' ')[0].split(':').map(Number);
-    return `${(h % 12 || 12).toString().padStart(2, '0')}:${m.toString().padStart(2, '0')} ${h >= 12 ? 'PM' : 'AM'}`;
+function showMonthlySchedule() {
+    const data = JSON.parse(localStorage.getItem('monthly_cache'));
+    if (!data) return;
+    const container = document.getElementById("monthlyList");
+    container.innerHTML = "";
+    const today = getCorrectNow().getDate();
+    data.forEach((day, i) => {
+        const row = document.createElement("div");
+        row.className = "list-item" + (i + 1 === today ? " today-highlight" : "");
+        const sehri = calculateSehri(day.timings.Fajr.split(' ')[0]);
+        const iftar = format12Hour(day.timings.Maghrib.split(' ')[0]);
+        row.innerHTML = `<span class="day-num">${i + 1}</span><span style="flex: 1; margin-left: 5px;">${day.date.readable.split(' ')[0]} ${day.date.readable.split(' ')[1]}</span><span style="color:var(--gold); margin-right: 8px;">সেহরি: ${sehri}</span><span style="color:var(--neon)">ইফতার: ${iftar}</span>`;
+        container.appendChild(row);
+        if (i + 1 === today) setTimeout(() => row.scrollIntoView({ behavior: 'smooth', block: 'center' }), 200);
+    });
+    document.getElementById("monthlyModal").style.display = "block";
+    clearTimeout(modalTimer);
+    modalTimer = setTimeout(closeModal, 10000);
 }
 
-function calculateSehri(fajr) {
-    let [h, m] = fajr.split(' ')[0].split(':').map(Number);
-    let d = new Date(); d.setHours(h, m, 0); d.setMinutes(d.getMinutes() - 5);
-    return d.toLocaleTimeString('bn-BD', { hour: '2-digit', minute: '2-digit', hour12: true });
-}
-
+function closeModal() { document.getElementById("monthlyModal").style.display = "none"; }
+function toggleStatusView() { statusView = (statusView + 1) % 3; updateStatus(); }
 function toggleRakat(id) {
     document.querySelectorAll('.rakat-info').forEach(el => el.id !== id && el.classList.remove('show-rakat'));
     document.getElementById(id).classList.toggle('show-rakat');
@@ -159,7 +157,5 @@ setInterval(() => {
     if (pTimes.Fajr) updateStatus();
 }, 1000);
 
-function loadData() { fetchMonthly(); }
 async function requestWakeLock() { try { if ('wakeLock' in navigator) wakeLock = await navigator.wakeLock.request('screen'); } catch (e) {} }
-
 window.onload = initApp;
