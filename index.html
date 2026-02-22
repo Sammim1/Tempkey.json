@@ -3,73 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GX.Sammim | Prayer Time All-in-One</title>
+    <title>GX.Sammim | Prayer Time</title>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+Bengali:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
-    <style>
-        :root {
-            --glass: rgba(255, 255, 255, 0.05);
-            --gold: #ffcc00;
-            --neon: #00d2ff;
-            --rose: #ff4757;
-        }
-
-        body {
-            margin: 0; background: #050a14; color: white;
-            font-family: 'Noto Serif Bengali', serif; 
-            display: flex; justify-content: center;
-        }
-
-        .app { width: 100%; max-width: 400px; padding: 15px; }
-
-        #clock { 
-            font-size: 3.2rem; text-align: center; margin: 10px 0; 
-            font-weight: 800; color: #fff; text-shadow: 0 0 20px rgba(0, 210, 255, 0.4);
-        }
-
-        .card {
-            background: var(--glass); border-radius: 15px; padding: 15px; margin-bottom: 20px;
-            border: 1px solid rgba(0, 210, 255, 0.3); box-shadow: 0 0 15px rgba(0, 210, 255, 0.2); backdrop-filter: blur(10px);
-        }
-
-        .header-design { text-align: center; margin-bottom: 20px; }
-        .mosque-main { font-size: 55px; color: var(--neon); filter: drop-shadow(0 0 10px var(--neon)); }
-        .neon-line { height: 2px; width: 60%; background: var(--neon); margin: 10px auto; box-shadow: 0 0 10px var(--neon); }
-        .developer-name { font-size: 19px; font-weight: bold; color: #fff; }
-
-        select { 
-            width: 100%; padding: 12px; border-radius: 10px; background: #0a111e; 
-            color: white; border: 1px solid var(--neon); margin-bottom: 20px; 
-            outline: none; font-family: inherit; font-size: 1rem;
-        }
-
-        .ramadan-combined { display: flex; justify-content: space-around; text-align: center; align-items: center; }
-        .divider { width: 1px; height: 40px; background: rgba(0, 210, 255, 0.3); }
-        .ramadan-box span { font-size: 1.5rem; color: var(--gold); font-weight: bold; display: block; margin-top: 5px; }
-        .ramadan-box p { font-size: 0.85rem; color: #00d2ff; margin: 0; }
-
-        .status-wrapper-all { display: flex; flex-direction: column; gap: 10px; }
-        .status-line { display: flex; justify-content: space-between; font-size: 0.95rem; padding-bottom: 5px; border-bottom: 1px solid rgba(255, 255, 255, 0.05); }
-        .status-line:last-child { border-bottom: none; }
-        .label { font-weight: bold; }
-        .gold { color: var(--gold); }
-        .neon { color: var(--neon); }
-        .rose { color: var(--rose); }
-
-        .time-row { display: flex; justify-content: space-between; padding: 15px 5px; border-bottom: 1px solid #222; cursor: pointer; }
-        .sunrise-row { color: #ff9f43; border-bottom: 1px dotted #444; }
-
-        .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.92); backdrop-filter: blur(8px); }
-        .modal-content { background: #0a111e; margin: 5% auto; padding: 20px; border: 1px solid var(--neon); width: 90%; max-width: 380px; border-radius: 20px; box-shadow: 0 0 30px var(--neon); position: relative; max-height: 80vh; overflow-y: auto; }
-        .close-btn { color: white; float: right; font-size: 28px; font-weight: bold; cursor: pointer; }
-
-        .list-item { display: flex; justify-content: space-between; padding: 12px 5px; border-bottom: 1px solid rgba(255,255,255,0.1); font-size: 11px; align-items: center; }
-        .today-highlight { background: rgba(0, 210, 255, 0.2) !important; border: 1px solid var(--neon); border-radius: 8px; box-shadow: 0 0 10px var(--neon); }
-        .day-num { width: 20px; color: var(--neon); font-weight: bold; }
-        .rakat-info { max-height: 0; opacity: 0; overflow: hidden; background: rgba(0, 210, 255, 0.05); transition: all 0.3s; text-align: center; }
-        .show-rakat { max-height: 100px; opacity: 1; padding: 10px; border: 1px solid var(--neon); margin: 5px 0; border-radius: 8px; }
-    </style>
 </head>
 <body>
     <div class="app">
@@ -108,8 +45,11 @@
             </div>
         </div>
 
-        <div class="card status-card glow">
-            <div id="combinedStatus" class="status-wrapper-all">লোড হচ্ছে...</div>
+        <div class="card status-card glow" onclick="toggleStatusView()" style="cursor: pointer;">
+            <div class="status-wrapper">
+                <span id="prayerStatus" class="status-highlight">লোড হচ্ছে...</span>
+                <span id="nextTime" class="next-time-inline"></span>
+            </div>
         </div>
 
         <div class="card list-card glow">
@@ -117,9 +57,6 @@
             <div class="prayer-list">
                 <div class="time-row" onclick="toggleRakat('fajr-r')"><span>ফজর</span><span id="Fajr">--:--</span></div>
                 <div id="fajr-r" class="rakat-info">ফজর: ৪ রাকাত (২ সুন্নাত, ২ ফরজ)</div>
-                
-                <div class="time-row sunrise-row"><span>সূর্যোদয় (Sunrise)</span><span id="Sunrise">--:--</span></div>
-                
                 <div class="time-row" onclick="toggleRakat('dhuhr-r')"><span>যোহর</span><span id="Dhuhr">--:--</span></div>
                 <div id="dhuhr-r" class="rakat-info">যোহর: ১২ রাকাত (৪ সুন্নাত, ৪ ফরজ, ২ সুন্নাত, ২ নফল)</div>
                 <div class="time-row" onclick="toggleRakat('asr-r')"><span>আসর</span><span id="Asr">--:--</span></div>
@@ -137,152 +74,10 @@
             <span class="close-btn" onclick="closeModal()">&times;</span>
             <h3 style="color: var(--neon); text-align: center; font-size: 18px;">৩০ দিনের সেহরি ও ইফতার</h3>
             <div id="monthlyList" class="monthly-list-container"></div>
+            <p style="font-size: 10px; text-align: center; color: #aaa; margin-top: 10px;">(১০ সেকেন্ড পর অটো বন্ধ হবে)</p>
         </div>
     </div>
 
-    <script>
-        let pTimes = {};
-        let timeOffset = 0;
-        let wakeLock = null;
-
-        async function initApp() {
-            await syncTime();
-            loadData();
-            requestWakeLock();
-        }
-
-        async function syncTime() {
-            try {
-                const start = Date.now();
-                const res = await fetch('https://worldtimeapi.org/api/timezone/Asia/Dhaka');
-                const data = await res.json();
-                const sTime = new Date(data.datetime).getTime();
-                timeOffset = (sTime + (Date.now() - start) / 2) - Date.now();
-            } catch (e) { timeOffset = 0; }
-        }
-
-        function getCorrectNow() { return new Date(Date.now() + timeOffset); }
-
-        async function loadData() {
-            const now = getCorrectNow();
-            const city = document.getElementById("city").value;
-            const method = 1; 
-            const url = `https://api.aladhan.com/v1/calendarByCity?city=${city}&country=Bangladesh&method=${method}&school=1&month=${now.getMonth()+1}&year=${now.getFullYear()}`;
-
-            try {
-                const res = await fetch(url);
-                const data = await res.json();
-                if(data.code === 200) {
-                    localStorage.setItem('monthly_cache', JSON.stringify(data.data));
-                    updateUI(data.data);
-                }
-            } catch (e) {
-                const cached = JSON.parse(localStorage.getItem('monthly_cache'));
-                if (cached) updateUI(cached);
-            }
-        }
-
-        function updateUI(monthlyData) {
-            const today = getCorrectNow().getDate();
-            const todayData = monthlyData[today - 1];
-            pTimes = todayData.timings;
-
-            const names = ["Fajr", "Sunrise", "Dhuhr", "Asr", "Maghrib", "Isha"];
-            names.forEach(n => {
-                let cleanTime = pTimes[n].split(' ')[0];
-                const el = document.getElementById(n);
-                if(el) el.innerText = format12Hour(cleanTime);
-            });
-
-            const fActual = pTimes.Fajr.split(' ')[0];
-            const mActual = pTimes.Maghrib.split(' ')[0];
-            document.getElementById("Sehri").innerText = format12Hour(fActual);
-            document.getElementById("Iftar").innerText = format12Hour(mActual);
-            document.getElementById("hijriDate").innerText = `${todayData.date.hijri.day} ${todayData.date.hijri.month.en}, ${todayData.date.hijri.year} AH`;
-            
-            updateStatus();
-        }
-
-        function format12Hour(timeStr) {
-            let [h, m] = timeStr.split(':').map(Number);
-            let ampm = h >= 12 ? 'PM' : 'AM';
-            h = h % 12 || 12;
-            return `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')} ${ampm}`;
-        }
-
-        function updateStatus() {
-            if (!pTimes.Fajr) return;
-            const now = getCorrectNow();
-            
-            const sch = [
-                { n: "ফজর", t: pTimes.Fajr.split(' ')[0] },
-                { n: "যোহর", t: pTimes.Dhuhr.split(' ')[0] },
-                { n: "আসর", t: pTimes.Asr.split(' ')[0] },
-                { n: "মাগরিব", t: pTimes.Maghrib.split(' ')[0] },
-                { n: "এশা", t: pTimes.Isha.split(' ')[0] }
-            ];
-            let nextP = null, nextPT = null;
-            for (let p of sch) {
-                let [h, m] = p.t.split(':');
-                let d = new Date(now); d.setHours(h, m, 0);
-                if (d > now) { nextP = p; nextPT = d; break; }
-            }
-            if (!nextP) {
-                nextP = sch[0]; nextPT = new Date(now); nextPT.setDate(now.getDate() + 1);
-                let [h, m] = nextP.t.split(':'); nextPT.setHours(h, m, 0);
-            }
-
-            let [sfH, sfM] = pTimes.Fajr.split(' ')[0].split(':');
-            let sT = new Date(now); sT.setHours(sfH, sfM, 0);
-            if (now > sT) sT.setDate(sT.getDate() + 1);
-
-            let [ifH, ifM] = pTimes.Maghrib.split(' ')[0].split(':');
-            let iT = new Date(now); iT.setHours(ifH, ifM, 0);
-            if (now > iT) iT.setDate(iT.getDate() + 1);
-
-            const getDiff = (target) => {
-                const diff = Math.floor((target - now) / 1000);
-                const h = Math.floor(diff / 3600);
-                const m = Math.floor((diff % 3600) / 60);
-                const s = diff % 60;
-                return `${h}ঘঃ ${m}মিঃ ${s}সেঃ`;
-            };
-
-            document.getElementById("combinedStatus").innerHTML = `
-                <div class="status-line"><span class="label gold">পরবর্তী ${nextP.n}:</span> <span>${getDiff(nextPT)}</span></div>
-                <div class="status-line"><span class="label neon">সেহরি বাকি:</span> <span>${getDiff(sT)}</span></div>
-                <div class="status-line"><span class="label rose">ইফতার বাকি:</span> <span>${getDiff(iT)}</span></div>
-            `;
-        }
-
-        function showMonthlySchedule() {
-            const data = JSON.parse(localStorage.getItem('monthly_cache'));
-            if (!data) return;
-            const container = document.getElementById("monthlyList");
-            container.innerHTML = "";
-            const today = getCorrectNow().getDate();
-            data.forEach((day, i) => {
-                const row = document.createElement("div");
-                row.className = "list-item" + (i + 1 === today ? " today-highlight" : "");
-                row.innerHTML = `<span class="day-num">${i + 1}</span><span style="flex: 1; margin-left: 5px;">${day.date.readable.split(' ')[0]} ${day.date.readable.split(' ')[1]}</span><span style="color:var(--gold); margin-right: 8px;">সেহরি: ${format12Hour(day.timings.Fajr.split(' ')[0])}</span><span style="color:var(--neon)">ইফতার: ${format12Hour(day.timings.Maghrib.split(' ')[0])}</span>`;
-                container.appendChild(row);
-                if (i + 1 === today) setTimeout(() => row.scrollIntoView({ behavior: 'smooth', block: 'center' }), 200);
-            });
-            document.getElementById("monthlyModal").style.display = "block";
-        }
-
-        function closeModal() { document.getElementById("monthlyModal").style.display = "none"; }
-        function toggleRakat(id) { document.getElementById(id).classList.toggle('show-rakat'); }
-
-        setInterval(() => {
-            const now = getCorrectNow();
-            document.getElementById("clock").innerText = now.toLocaleTimeString("bn-BD");
-            document.getElementById("today").innerText = now.toLocaleDateString("bn-BD", { weekday:'long', year:'numeric', month:'long', day:'numeric' });
-            if (pTimes.Fajr) updateStatus();
-        }, 1000);
-
-        async function requestWakeLock() { try { if ('wakeLock' in navigator) wakeLock = await navigator.wakeLock.request('screen'); } catch (e) {} }
-        window.onload = initApp;
-    </script>
+    <script src="script.js"></script>
 </body>
 </html>
