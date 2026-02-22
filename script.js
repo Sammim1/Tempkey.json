@@ -8,8 +8,10 @@ async function initApp() {
     await syncTime();
     loadData();
     requestWakeLock();
-    // স্ট্যাটাস অটো স্ক্রল করার জন্য টাইমার
-    setInterval(autoScrollStatus, 5000); 
+    // স্ট্যাটাস অটোমেটিক পরিবর্তন হওয়ার জন্য (ঐচ্ছিক, চাইলে ক্লিক করেও বদলাতে পারবেন)
+    setInterval(() => {
+        statusView = (statusView + 1) % 3;
+    }, 10000); // ১০ সেকেন্ড পর পর ভিউ বদলাবে
 }
 
 async function syncTime() {
@@ -27,6 +29,8 @@ function getCorrectNow() { return new Date(Date.now() + timeOffset); }
 async function loadData() {
     const now = getCorrectNow();
     const city = document.getElementById("city").value;
+    
+    // IslamicFinder Standard (Method 1)
     const method = 1; 
     const url = `https://api.aladhan.com/v1/calendarByCity?city=${city}&country=Bangladesh&method=${method}&school=1&month=${now.getMonth()+1}&year=${now.getFullYear()}`;
 
@@ -54,8 +58,9 @@ function updateUI(monthlyData) {
         document.getElementById(n).innerText = format12Hour(cleanTime);
     });
 
-    // ৫ মিনিট বিয়োগ বাদ দেওয়া হয়েছে, এখন সরাসরি ফজরের সময় ই সেহরি শেষ
-    document.getElementById("Sehri").innerText = format12Hour(pTimes.Fajr.split(' ')[0]);
+    // ৫ মিনিট বিয়োগ বাদ দেওয়া হয়েছে - এখন সরাসরি ফজরের টাইমই সেহরি শেষ
+    let fajarTime = pTimes.Fajr.split(' ')[0];
+    document.getElementById("Sehri").innerText = format12Hour(fajarTime);
     document.getElementById("Iftar").innerText = format12Hour(pTimes.Maghrib.split(' ')[0]);
     
     document.getElementById("hijriDate").innerText = `${todayData.date.hijri.day} ${todayData.date.hijri.month.en}, ${todayData.date.hijri.year} AH`;
@@ -70,26 +75,20 @@ function format12Hour(timeStr) {
     return `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')} ${ampm}`;
 }
 
-// ৫ মিনিট বিয়োগ করার ফাংশনটি বাদ দিয়ে সরাসরি টাইম দেখানোর ফাংশন
+// সেহরি ক্যালকুলেশন এখন সরাসরি ফজরের সময় রিটার্ন করবে
 function calculateSehri(fajrStr) {
     return format12Hour(fajrStr);
 }
 
-function autoScrollStatus() {
-    statusView = (statusView + 1) % 3;
-    updateStatus();
-}
-
-function toggleStatusView() {
-    statusView = (statusView + 1) % 3;
-    updateStatus();
+function toggleStatusView() { 
+    statusView = (statusView + 1) % 3; 
+    updateStatus(); 
 }
 
 function updateStatus() {
     if (!pTimes.Fajr) return;
     const now = getCorrectNow();
     
-    // নামাজের লিস্ট
     const sch = [
         { n: "ফজর", t: pTimes.Fajr.split(' ')[0] },
         { n: "যোহর", t: pTimes.Dhuhr.split(' ')[0] },
@@ -124,8 +123,9 @@ function updateStatus() {
         if (now > target) target.setDate(target.getDate() + 1);
     }
 
-    // সময় গণনা (ঘন্টা, মিনিট, সেকেন্ড সহ)
-    const totalSeconds = Math.floor((target - now) / 1000);
+    // সেকেন্ডসহ সুক্ষ্ম হিসাব
+    const diffMs = target - now;
+    const totalSeconds = Math.floor(diffMs / 1000);
     const h = Math.floor(totalSeconds / 3600);
     const m = Math.floor((totalSeconds % 3600) / 60);
     const s = totalSeconds % 60;
@@ -155,7 +155,6 @@ function showMonthlySchedule() {
 }
 
 function closeModal() { document.getElementById("monthlyModal").style.display = "none"; }
-
 function toggleRakat(id) {
     document.querySelectorAll('.rakat-info').forEach(el => el.id !== id && el.classList.remove('show-rakat'));
     document.getElementById(id).classList.toggle('show-rakat');
