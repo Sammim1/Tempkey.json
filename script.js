@@ -8,6 +8,8 @@ async function initApp() {
     await syncTime();
     loadData();
     requestWakeLock();
+    // স্ট্যাটাস অটো স্ক্রল করার জন্য টাইমার
+    setInterval(autoScrollStatus, 5000); 
 }
 
 async function syncTime() {
@@ -25,8 +27,6 @@ function getCorrectNow() { return new Date(Date.now() + timeOffset); }
 async function loadData() {
     const now = getCorrectNow();
     const city = document.getElementById("city").value;
-    
-    // Method 1 = University of Islamic Sciences, Karachi (IslamicFinder Standard)
     const method = 1; 
     const url = `https://api.aladhan.com/v1/calendarByCity?city=${city}&country=Bangladesh&method=${method}&school=1&month=${now.getMonth()+1}&year=${now.getFullYear()}`;
 
@@ -48,18 +48,16 @@ function updateUI(monthlyData) {
     const todayData = monthlyData[today - 1];
     pTimes = todayData.timings;
 
-    // নামাজের সময়সূচী আপডেট
     const names = ["Fajr", "Dhuhr", "Asr", "Maghrib", "Isha"];
     names.forEach(n => {
         let cleanTime = pTimes[n].split(' ')[0];
         document.getElementById(n).innerText = format12Hour(cleanTime);
     });
 
-    // ইফতার ও সেহরি আপডেট
-    document.getElementById("Sehri").innerText = calculateSehri(pTimes.Fajr.split(' ')[0]);
+    // ৫ মিনিট বিয়োগ বাদ দেওয়া হয়েছে, এখন সরাসরি ফজরের সময় ই সেহরি শেষ
+    document.getElementById("Sehri").innerText = format12Hour(pTimes.Fajr.split(' ')[0]);
     document.getElementById("Iftar").innerText = format12Hour(pTimes.Maghrib.split(' ')[0]);
     
-    // হিজরি তারিখ
     document.getElementById("hijriDate").innerText = `${todayData.date.hijri.day} ${todayData.date.hijri.month.en}, ${todayData.date.hijri.year} AH`;
     
     updateStatus();
@@ -72,17 +70,26 @@ function format12Hour(timeStr) {
     return `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')} ${ampm}`;
 }
 
+// ৫ মিনিট বিয়োগ করার ফাংশনটি বাদ দিয়ে সরাসরি টাইম দেখানোর ফাংশন
 function calculateSehri(fajrStr) {
-    let [h, m] = fajrStr.split(':').map(Number);
-    let d = new Date();
-    d.setHours(h, m);
-    d.setMinutes(d.getMinutes() - 5); // সেহরি ৫ মিনিট আগে শেষ
-    return format12Hour(`${d.getHours()}:${d.getMinutes()}`);
+    return format12Hour(fajrStr);
+}
+
+function autoScrollStatus() {
+    statusView = (statusView + 1) % 3;
+    updateStatus();
+}
+
+function toggleStatusView() {
+    statusView = (statusView + 1) % 3;
+    updateStatus();
 }
 
 function updateStatus() {
     if (!pTimes.Fajr) return;
     const now = getCorrectNow();
+    
+    // নামাজের লিস্ট
     const sch = [
         { n: "ফজর", t: pTimes.Fajr.split(' ')[0] },
         { n: "যোহর", t: pTimes.Dhuhr.split(' ')[0] },
@@ -108,7 +115,7 @@ function updateStatus() {
     if (statusView === 1) { 
         label = "সেহরির বাকি:"; 
         let [sfH, sfM] = pTimes.Fajr.split(' ')[0].split(':');
-        target = new Date(now); target.setHours(sfH, sfM, 0); target.setMinutes(target.getMinutes() - 5);
+        target = new Date(now); target.setHours(sfH, sfM, 0);
         if (now > target) target.setDate(target.getDate() + 1);
     } else if (statusView === 2) { 
         label = "ইফতারের বাকি:"; 
@@ -117,10 +124,14 @@ function updateStatus() {
         if (now > target) target.setDate(target.getDate() + 1);
     }
 
-    const diff = Math.floor((target - now) / 60000);
-    const h = Math.floor(diff / 60), m = diff % 60;
+    // সময় গণনা (ঘন্টা, মিনিট, সেকেন্ড সহ)
+    const totalSeconds = Math.floor((target - now) / 1000);
+    const h = Math.floor(totalSeconds / 3600);
+    const m = Math.floor((totalSeconds % 3600) / 60);
+    const s = totalSeconds % 60;
+
     document.getElementById("prayerStatus").innerText = label;
-    document.getElementById("nextTime").innerText = `(বাকি: ${h > 0 ? h + 'ঘঃ ' : ''}${m}মিঃ)`;
+    document.getElementById("nextTime").innerText = ` (${h}ঘঃ ${m}মিঃ ${s}সেঃ)`;
 }
 
 function showMonthlySchedule() {
@@ -132,7 +143,7 @@ function showMonthlySchedule() {
     data.forEach((day, i) => {
         const row = document.createElement("div");
         row.className = "list-item" + (i + 1 === today ? " today-highlight" : "");
-        const sehri = calculateSehri(day.timings.Fajr.split(' ')[0]);
+        const sehri = format12Hour(day.timings.Fajr.split(' ')[0]);
         const iftar = format12Hour(day.timings.Maghrib.split(' ')[0]);
         row.innerHTML = `<span class="day-num">${i + 1}</span><span style="flex: 1; margin-left: 5px;">${day.date.readable.split(' ')[0]} ${day.date.readable.split(' ')[1]}</span><span style="color:var(--gold); margin-right: 8px;">সেহরি: ${sehri}</span><span style="color:var(--neon)">ইফতার: ${iftar}</span>`;
         container.appendChild(row);
@@ -144,7 +155,7 @@ function showMonthlySchedule() {
 }
 
 function closeModal() { document.getElementById("monthlyModal").style.display = "none"; }
-function toggleStatusView() { statusView = (statusView + 1) % 3; updateStatus(); }
+
 function toggleRakat(id) {
     document.querySelectorAll('.rakat-info').forEach(el => el.id !== id && el.classList.remove('show-rakat'));
     document.getElementById(id).classList.toggle('show-rakat');
